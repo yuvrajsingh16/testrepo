@@ -1,0 +1,9 @@
+target/
+logs/
+*.jar
+*.class
+.idea/
+*.iml
+.DS_Store
+.env
+newrelic_agent.log

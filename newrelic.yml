@@ -1,0 +1,85 @@
+common: &default_settings
+  license_key: '<YOUR_NEW_RELIC_LICENSE_KEY>'
+
+  app_name: oncall-demo
+
+  log_level: info
+
+  audit_mode: false
+
+  high_security: false
+
+  enable_auto_app_naming: false
+
+  enable_auto_transaction_naming: true
+
+  # Proxy settings (uncomment if behind a proxy)
+  # proxy_host: ''
+  # proxy_port: 8080
+  # proxy_user: ''
+  # proxy_password: ''
+
+  transaction_tracer:
+    enabled: true
+    transaction_threshold: apdex_f
+    record_sql: obfuscated
+    log_sql: false
+    stack_trace_threshold: 0.5
+    explain_enabled: true
+    explain_threshold: 0.5
+
+  error_collector:
+    enabled: true
+    ignore_classes: []
+    ignore_messages: {}
+    ignore_status_codes: "404"
+    expected_classes: []
+    expected_messages: {}
+    expected_status_codes: ""
+
+  transaction_events:
+    enabled: true
+    max_samples_stored: 2000
+
+  distributed_tracing:
+    enabled: true
+
+  span_events:
+    enabled: true
+
+  application_logging:
+    enabled: true
+    forwarding:
+      enabled: true
+      max_samples_stored: 10000
+    metrics:
+      enabled: true
+    local_decorating:
+      enabled: false
+
+  custom_insights_events:
+    enabled: true
+    max_samples_stored: 5000
+
+  browser_monitoring:
+    auto_instrument: true
+
+  class_transformer:
+    com.newrelic.instrumentation.spring-6.0:
+      enabled: true
+
+  labels:
+    environment: demo
+    team: oncall-agent-demo
+    service: order-processing
+
+development:
+  <<: *default_settings
+  app_name: oncall-demo (Development)
+
+staging:
+  <<: *default_settings
+  app_name: oncall-demo (Staging)
+
+production:
+  <<: *default_settings

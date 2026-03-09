@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  oncall-demo:
+    build: .
+    ports:
+      - "8085:8085"
+    environment:
+      - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
+      - NEW_RELIC_APP_NAME=oncall-demo
+      - NEW_RELIC_LOG_FILE_NAME=STDOUT
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
