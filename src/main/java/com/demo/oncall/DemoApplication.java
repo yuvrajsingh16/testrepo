@@ -65,7 +65,7 @@ public class DemoApplication {
                         <h1 class="text-4xl font-bold mb-2">Order Processing System</h1>
                         <p class="text-gray-400">On-Call Agent Demo &mdash; New Relic Monitored</p>
                         <span class="inline-block mt-3 px-3 py-1 bg-green-900 text-green-300 text-xs rounded-full">
-                            ● New Relic APM Active
+                             New Relic APM Active
                         </span>
                     </div>
 
@@ -83,9 +83,9 @@ public class DemoApplication {
                                 <label class="block text-sm font-medium text-gray-300 mb-2">Product</label>
                                 <select name="product" id="product"
                                     class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option value="Laptop Pro 16">Laptop Pro 16 — $1,299</option>
-                                    <option value="Wireless Headphones">Wireless Headphones — $199</option>
-                                    <option value="Mechanical Keyboard">Mechanical Keyboard — $149</option>
+                                    <option value="Laptop Pro 16">Laptop Pro 16  $1,299</option>
+                                    <option value="Wireless Headphones">Wireless Headphones  $199</option>
+                                    <option value="Mechanical Keyboard">Mechanical Keyboard  $149</option>
                                 </select>
                             </div>
                             <div>
@@ -118,7 +118,7 @@ public class DemoApplication {
                                 <span class="text-xs px-2 py-1 bg-green-900 text-green-300 rounded">Address: OK</span>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-4">⚠ Selecting Bob Martinez will trigger a NullPointerException (demo purpose)</p>
+                        <p class="text-xs text-gray-500 mt-4"> Selecting Bob Martinez will trigger a NullPointerException (demo purpose)</p>
                     </div>
                 </div>
 
@@ -145,13 +145,13 @@ public class DemoApplication {
                         if (data.status === 'success') {
                             resultDiv.innerHTML = `
                                 <div class="text-green-400">
-                                    <h3 class="text-lg font-semibold mb-2">✓ Order Processed Successfully</h3>
+                                    <h3 class="text-lg font-semibold mb-2"> Order Processed Successfully</h3>
                                     <pre class="text-sm bg-gray-900 p-4 rounded-lg overflow-auto">${JSON.stringify(data, null, 2)}</pre>
                                 </div>`;
                         } else {
                             resultDiv.innerHTML = `
                                 <div class="text-red-400">
-                                    <h3 class="text-lg font-semibold mb-2">✗ Order Processing Failed</h3>
+                                    <h3 class="text-lg font-semibold mb-2"> Order Processing Failed</h3>
                                     <p class="mb-2">${data.error}</p>
                                     <pre class="text-sm bg-gray-900 p-4 rounded-lg overflow-auto">${JSON.stringify(data, null, 2)}</pre>
                                 </div>`;
@@ -183,8 +183,6 @@ public class DemoApplication {
 
             log.info("Processing order for user: {} ({})", user.name, user.email);
 
-            // BUG: No null-check on user.address before calling toUpperCase().
-            // User "1002" (Bob Martinez) has a null address, causing a NullPointerException here.
             String shippingLabel = formatShippingLabel(user);
 
             String orderId = "ORD-" + System.currentTimeMillis();
@@ -204,23 +202,22 @@ public class DemoApplication {
                 "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
 
-        } catch (NullPointerException e) {
-            log.error("CRITICAL: NullPointerException while processing order for userId={}. " +
-                      "This indicates a data integrity issue — the user's shipping address is null. " +
-                      "Product: {}, Quantity: {}", userId, product, quantity, e);
+        } catch (IllegalStateException e) {
+            log.error("CRITICAL: Validation failure while processing order for userId={}. Product: {}, Quantity: {}", 
+                      userId, product, quantity, e);
 
             NewRelic.noticeError(e, Map.of(
                 "userId", userId,
                 "product", product,
-                "errorType", "NullPointerException",
+                "errorType", "IllegalStateException",
                 "component", "OrderProcessing",
-                "rootCause", "User shipping address is null in database"
+                "rootCause", "Missing shipping address for user"
             ));
 
             return Map.of(
                 "status", "error",
-                "error", "NullPointerException: failed to generate shipping label for user " + userId,
-                "detail", "User profile has a null shipping address. This is a known data integrity bug.",
+                "error", "Missing shipping address for user " + userId,
+                "detail", e.getMessage(),
                 "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
         }
@@ -234,9 +231,13 @@ public class DemoApplication {
     // --- Internal Methods ---
 
     private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
-        String normalizedAddress = user.address.toUpperCase();
+        Objects.requireNonNull(user, "user must not be null");
+
+        if (user.address == null || user.address.isBlank()) {
+            throw new IllegalStateException("Missing shipping address for userId=" + user.id);
+        }
+
+        String normalizedAddress = user.address.toUpperCase(Locale.ROOT);
         return user.name + "\n" + normalizedAddress;
     }
 
