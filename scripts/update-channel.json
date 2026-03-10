@@ -1,0 +1,17 @@
+{
+  "query": "mutation UpdateChannel($accountId: Int!, $channelId: ID!, $channel: AiNotificationsChannelUpdate!) { aiNotificationsUpdateChannel(accountId: $accountId, channelId: $channelId, channel: $channel) { channel { id name status } } }",
+  "variables": {
+    "accountId": 7542617,
+    "channelId": "18e1d53d-3a9c-465f-900a-87d6e14ef088",
+    "channel": {
+      "name": "Dezifi OnCall Webhook Channel",
+      "properties": [
+        {
+          "key": "payload",
+          "value": "{\"incidentContext\":{\"incidentId\":\"INC-APM-{{ nrAccountId }}-{{ issueId }}\",\"serviceName\":\"oncall-demo\",\"triggeredAt\":\"{{ createdAt }}\",\"triggerEpoch\":\"{{ activatedAt }}\",\"title\":\"{{ issueTitle }}\",\"priority\":\"{{ priority }}\",\"conditionName\":\"{{ accumulations.conditionName }}\",\"policyName\":\"{{ accumulations.policyName }}\",\"description\":\"{{ accumulations.conditionDescription }}\"},\"timeWindow\":{\"investigationStartEpoch\":\"{{ activatedAt }}\",\"investigationEndEpoch\":\"{{ activatedAt }}\",\"baselineStartEpoch\":\"{{ activatedAt }}\",\"baselineEndEpoch\":\"{{ activatedAt }}\"},\"newRelic\":{\"accountId\":\"{{ nrAccountId }}\",\"entityGuid\":\"NzU0MjYxN3xBUE18QVBQTElDQVRJT058MTAwOTI4NzEzMQ\"}}",
+          "displayValue": "application/json"
+        }
+      ]
+    }
+  }
+}
