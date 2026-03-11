@@ -3,19 +3,21 @@
 A deliberately buggy Java Spring Boot application for demonstrating an **on-call agent workflow**:
 
 ```
-Alert (New Relic) → Agent reads exception/logs → Understands issue → Raises PR → Creates ServiceNow ticket
+Alert (New Relic)  Agent reads exception/logs  Understands issue  Raises PR  Creates ServiceNow ticket
 ```
 
-## The Bug
+## Current Behavior (Order Processing)
 
-`DemoApplication.java` has a `NullPointerException` in the order processing flow. When a user with a **null shipping address** (Bob Martinez, ID `1002`) places an order, `formatShippingLabel()` calls `.toUpperCase()` on a null address field.
+- The order processing flow validates the user profile.
+- If a user has a **null/blank shipping address** (e.g., Bob Martinez, ID `1002`), the application returns a **controlled error response**.
+- The error is captured via `NewRelic.noticeError(...)` with contextual attributes.
 
-**Stack trace produced:**
-```
-java.lang.NullPointerException: Cannot invoke "String.toUpperCase()" because "user.address" is null
-  at com.demo.oncall.DemoApplication.formatShippingLabel(DemoApplication.java:...)
-  at com.demo.oncall.DemoApplication.processOrder(DemoApplication.java:...)
-```
+## Historical Bug (Now Fixed)
+
+Previously, `DemoApplication.java` could throw a `NullPointerException` when `formatShippingLabel()` called `.toUpperCase()` on a null address field.
+
+- Root cause (historical): `user.address.toUpperCase(...)` executed when `user.address == null`.
+- Fix: add null/blank validation and throw a controlled `IllegalStateException` (handled by `processOrder(...)`).
 
 ## Quick Start
 
@@ -24,7 +26,7 @@ java.lang.NullPointerException: Cannot invoke "String.toUpperCase()" because "us
 ```bash
 ./mvnw spring-boot:run
 # Open http://localhost:8085
-# Select "Bob Martinez" → click "Process Order" → triggers NPE
+# Trigger error path: select "Bob Martinez"  click "Process Order"  returns controlled error payload
 ```
 
 ### Run with New Relic
@@ -36,9 +38,12 @@ export NEW_RELIC_LICENSE_KEY="your-key-here"
 # 2. Run with Docker
 docker-compose up --build
 
-# 3. Trigger the bug
+# 3. Trigger the error path
 bash scripts/trigger-npe.sh http://localhost:8085 5
 ```
+
+> Note: The script name is retained for backwards compatibility with the demo workflow, even though the app
+> no longer triggers an uncaught NPE in the default branch.
 
 ### Deploy New Relic Alerts (Terraform)
 
@@ -54,31 +59,30 @@ terraform apply \
 ## Demo Flow
 
 1. **App runs** on port 8085 with New Relic APM agent attached
-2. **Trigger the bug** via UI or `scripts/trigger-npe.sh`
-3. **New Relic captures** the NullPointerException with full stack trace and custom attributes
-4. **Alert fires** based on the NRQL condition in `terraform/newrelic-alerts.tf`
-5. **On-call agent receives** the alert and:
-   - Reads the exception details from New Relic API
+2. Trigger the error path via UI or `scripts/trigger-npe.sh`
+3. New Relic captures the handled exception via `NewRelic.noticeError(...)`
+4. Alert fires based on the NRQL condition in `terraform/newrelic-alerts.tf`
+5. On-call agent receives the alert and:
+   - Reads exception details / custom attributes
    - Reads application logs
-   - Identifies the root cause: null address in `formatShippingLabel()`
-   - Creates a fix (adds null-check guard)
-   - Raises a Pull Request
+   - Identifies the root cause (missing address validation scenario)
+   - Raises a Pull Request (if needed)
    - Creates a ServiceNow incident ticket
 
 ## Project Structure
 
 ```
-├── src/main/java/com/demo/oncall/
-│   └── DemoApplication.java        # Single Java file — the app + the bug
-├── src/main/resources/
-│   ├── application.properties       # App config (port 8085)
-│   └── logback-spring.xml           # Logging config (console + file)
-├── newrelic.yml                     # New Relic Java agent configuration
-├── terraform/
-│   └── newrelic-alerts.tf           # Alert policy, NRQL conditions, workflow
-├── scripts/
-│   └── trigger-npe.sh              # Script to trigger the NPE via curl
-├── Dockerfile                       # Multi-stage build with NR agent
-├── docker-compose.yml               # One-command deployment
-└── pom.xml                          # Maven build (Spring Boot 3.2 + NR API)
+ src/main/java/com/demo/oncall/
+    DemoApplication.java        # Single Java file  order processing behavior
+ src/main/resources/
+    application.properties       # App config (port 8085)
+    logback-spring.xml           # Logging config (console + file)
+ newrelic.yml                     # New Relic Java agent configuration
+ terraform/
+    newrelic-alerts.tf           # Alert policy, NRQL conditions, workflow
+ scripts/
+    trigger-npe.sh              # Script to trigger the error path via curl
+ Dockerfile                       # Multi-stage build with NR agent
+ docker-compose.yml               # One-command deployment
+ pom.xml                          # Maven build (Spring Boot 3.2 + NR API)
 ```
