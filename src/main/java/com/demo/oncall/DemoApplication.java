@@ -183,9 +183,7 @@ public class DemoApplication {
 
             log.info("Processing order for user: {} ({})", user.name, user.email);
 
-            // BUG: No null-check on user.address before calling toUpperCase().
-            // User "1002" (Bob Martinez) has a null address, causing a NullPointerException here.
-            String shippingLabel = formatShippingLabel(user);
+            String shippingLabel = formatShippingLabel(user, userId);
 
             String orderId = "ORD-" + System.currentTimeMillis();
             log.info("Order {} created successfully. Shipping to: {}", orderId, shippingLabel);
@@ -204,23 +202,38 @@ public class DemoApplication {
                 "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
 
+        } catch (IllegalArgumentException e) {
+            log.warn("Validation failed while processing order for userId={}. Product: {}, Quantity: {}. Reason: {}",
+                    userId, product, quantity, e.getMessage());
+
+            NewRelic.noticeError(e, Map.of(
+                "userId", userId,
+                "product", product,
+                "errorType", "ValidationError",
+                "component", "OrderProcessing",
+                "rootCause", "Missing shipping address"
+            ));
+
+            return Map.of(
+                "status", "error",
+                "error", "Shipping address is required for order processing (userId=" + userId + ")",
+                "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            );
+
         } catch (NullPointerException e) {
-            log.error("CRITICAL: NullPointerException while processing order for userId={}. " +
-                      "This indicates a data integrity issue — the user's shipping address is null. " +
-                      "Product: {}, Quantity: {}", userId, product, quantity, e);
+            log.error("CRITICAL: NullPointerException while processing order for userId={}. Product: {}, Quantity: {}",
+                    userId, product, quantity, e);
 
             NewRelic.noticeError(e, Map.of(
                 "userId", userId,
                 "product", product,
                 "errorType", "NullPointerException",
-                "component", "OrderProcessing",
-                "rootCause", "User shipping address is null in database"
+                "component", "OrderProcessing"
             ));
 
             return Map.of(
                 "status", "error",
-                "error", "NullPointerException: failed to generate shipping label for user " + userId,
-                "detail", "User profile has a null shipping address. This is a known data integrity bug.",
+                "error", "NullPointerException during order processing (userId=" + userId + ")",
                 "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
         }
@@ -233,9 +246,11 @@ public class DemoApplication {
 
     // --- Internal Methods ---
 
-    private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
+    private String formatShippingLabel(UserProfile user, String userId) {
+        if (user.address == null || user.address.isBlank()) {
+            throw new IllegalArgumentException("Missing shipping address for userId=" + userId);
+        }
+
         String normalizedAddress = user.address.toUpperCase();
         return user.name + "\n" + normalizedAddress;
     }
