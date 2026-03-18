@@ -13,6 +13,7 @@ import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.Locale;
 
 @SpringBootApplication
 @RestController
@@ -48,12 +49,12 @@ public class DemoApplication {
 
         return """
             <!DOCTYPE html>
-            <html lang="en">
+            <html lang=\"en\">
             <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta charset=\"UTF-8\">
+                <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
                 <title>Order Processing System</title>
-                <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+                <link href=\"https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css\" rel=\"stylesheet\">
                 <style>
                     body { background: linear-gradient(135deg, #0f172a 0%%, #1e293b 100%%); min-height: 100vh; }
                     .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
@@ -61,66 +62,66 @@ public class DemoApplication {
                     @keyframes pulse-red { 0%%, 100%% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); } 50%% { box-shadow: 0 0 0 10px rgba(239,68,68,0); } }
                 </style>
             </head>
-            <body class="text-white">
-                <div class="max-w-2xl mx-auto py-16 px-4">
-                    <div class="text-center mb-10">
-                        <h1 class="text-4xl font-bold mb-2">Order Processing System</h1>
-                        <p class="text-gray-400">On-Call Agent Demo &mdash; New Relic Monitored</p>
-                        <span class="inline-block mt-3 px-3 py-1 bg-green-900 text-green-300 text-xs rounded-full">
+            <body class=\"text-white\">
+                <div class=\"max-w-2xl mx-auto py-16 px-4\">
+                    <div class=\"text-center mb-10\">
+                        <h1 class=\"text-4xl font-bold mb-2\">Order Processing System</h1>
+                        <p class=\"text-gray-400\">On-Call Agent Demo &mdash; New Relic Monitored</p>
+                        <span class=\"inline-block mt-3 px-3 py-1 bg-green-900 text-green-300 text-xs rounded-full\">
                             ● New Relic APM Active
                         </span>
                     </div>
 
-                    <div class="glass rounded-2xl p-8 mb-8">
-                        <h2 class="text-xl font-semibold mb-6">Submit New Order</h2>
-                        <form id="orderForm" class="space-y-5">
+                    <div class=\"glass rounded-2xl p-8 mb-8\">
+                        <h2 class=\"text-xl font-semibold mb-6\">Submit New Order</h2>
+                        <form id=\"orderForm\" class=\"space-y-5\">
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Customer</label>
-                                <select name="userId" id="userId"
-                                    class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <label class=\"block text-sm font-medium text-gray-300 mb-2\">Customer</label>
+                                <select name=\"userId\" id=\"userId\"
+                                    class=\"w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent\">
                                     """ + userOptions.toString() + """
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Product</label>
-                                <select name="product" id="product"
-                                    class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option value="Laptop Pro 16">Laptop Pro 16 — $1,299</option>
-                                    <option value="Wireless Headphones">Wireless Headphones — $199</option>
-                                    <option value="Mechanical Keyboard">Mechanical Keyboard — $149</option>
+                                <label class=\"block text-sm font-medium text-gray-300 mb-2\">Product</label>
+                                <select name=\"product\" id=\"product\"
+                                    class=\"w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent\">
+                                    <option value=\"Laptop Pro 16\">Laptop Pro 16 — $1,299</option>
+                                    <option value=\"Wireless Headphones\">Wireless Headphones — $199</option>
+                                    <option value=\"Mechanical Keyboard\">Mechanical Keyboard — $149</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Quantity</label>
-                                <input type="number" name="quantity" id="quantity" value="1" min="1" max="99"
-                                    class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <label class=\"block text-sm font-medium text-gray-300 mb-2\">Quantity</label>
+                                <input type=\"number\" name=\"quantity\" id=\"quantity\" value=\"1\" min=\"1\" max=\"99\"
+                                    class=\"w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent\">
                             </div>
-                            <button type="submit"
-                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                            <button type=\"submit\"
+                                class=\"w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors\">
                                 Process Order
                             </button>
                         </form>
                     </div>
 
-                    <div id="result" class="hidden glass rounded-2xl p-8 mb-8"></div>
+                    <div id=\"result\" class=\"hidden glass rounded-2xl p-8 mb-8\"></div>
 
-                    <div class="glass rounded-2xl p-6">
-                        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Customer Database</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
-                                <div><span class="font-medium">Alice Johnson</span> <span class="text-gray-500 text-sm ml-2">ID: 1001</span></div>
-                                <span class="text-xs px-2 py-1 bg-green-900 text-green-300 rounded">Address: OK</span>
+                    <div class=\"glass rounded-2xl p-6\">
+                        <h3 class=\"text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4\">Customer Database</h3>
+                        <div class=\"space-y-3\">
+                            <div class=\"flex justify-between items-center p-3 bg-gray-800 rounded-lg\">
+                                <div><span class=\"font-medium\">Alice Johnson</span> <span class=\"text-gray-500 text-sm ml-2\">ID: 1001</span></div>
+                                <span class=\"text-xs px-2 py-1 bg-green-900 text-green-300 rounded\">Address: OK</span>
                             </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg border border-red-900">
-                                <div><span class="font-medium">Bob Martinez</span> <span class="text-gray-500 text-sm ml-2">ID: 1002</span></div>
-                                <span class="text-xs px-2 py-1 bg-red-900 text-red-300 rounded pulse-red">Address: MISSING</span>
+                            <div class=\"flex justify-between items-center p-3 bg-gray-800 rounded-lg border border-red-900\">
+                                <div><span class=\"font-medium\">Bob Martinez</span> <span class=\"text-gray-500 text-sm ml-2\">ID: 1002</span></div>
+                                <span class=\"text-xs px-2 py-1 bg-red-900 text-red-300 rounded pulse-red\">Address: MISSING</span>
                             </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
-                                <div><span class="font-medium">Charlie Davis</span> <span class="text-gray-500 text-sm ml-2">ID: 1003</span></div>
-                                <span class="text-xs px-2 py-1 bg-green-900 text-green-300 rounded">Address: OK</span>
+                            <div class=\"flex justify-between items-center p-3 bg-gray-800 rounded-lg\">
+                                <div><span class=\"font-medium\">Charlie Davis</span> <span class=\"text-gray-500 text-sm ml-2\">ID: 1003</span></div>
+                                <span class=\"text-xs px-2 py-1 bg-green-900 text-green-300 rounded\">Address: OK</span>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-4">⚠ Selecting Bob Martinez will trigger a NullPointerException (demo purpose)</p>
+                        <p class=\"text-xs text-gray-500 mt-4\">⚠ Selecting Bob Martinez will trigger a NullPointerException (demo purpose)</p>
                     </div>
                 </div>
 
@@ -185,8 +186,6 @@ public class DemoApplication {
 
             log.info("Processing order for user: {} ({})", user.name, user.email);
 
-            // BUG: No null-check on user.address before calling toUpperCase().
-            // User "1002" (Bob Martinez) has a null address, causing a NullPointerException here.
             String shippingLabel = formatShippingLabel(user);
 
             String orderId = "ORD-" + System.currentTimeMillis();
@@ -206,16 +205,31 @@ public class DemoApplication {
                 "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
 
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            log.warn("Order validation failed for userId={}: {}", userId, e.getMessage());
+            NewRelic.noticeError(e, Map.of(
+                "userId", userId,
+                "product", product,
+                "errorType", e.getClass().getSimpleName(),
+                "component", "OrderProcessing",
+                "rootCause", "Missing/invalid required user fields"
+            ));
+
+            return Map.of(
+                "status", "error",
+                "error", e.getClass().getSimpleName() + ": " + e.getMessage(),
+                "detail", "Order request could not be processed due to missing/invalid customer data.",
+                "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            );
+
         } catch (NullPointerException e) {
+            // Backstop: keep a final guard to avoid 500s if other null dereferences exist.
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
             String stackTrace = sw.toString();
 
             log.error("CRITICAL: NullPointerException while processing order for userId={}. " +
-                      "This indicates a data integrity issue — the user's shipping address is null. " +
                       "Product: {}, Quantity: {}. " +
-                      "Source: src/main/java/com/demo/oncall/DemoApplication.java " +
-                      "Method: formatShippingLabel() " +
                       "Repo: https://github.com/yuvrajsingh16/testrepo " +
                       "Stacktrace:\n{}", userId, product, quantity, stackTrace);
 
@@ -223,14 +237,13 @@ public class DemoApplication {
                 "userId", userId,
                 "product", product,
                 "errorType", "NullPointerException",
-                "component", "OrderProcessing",
-                "rootCause", "User shipping address is null in database"
+                "component", "OrderProcessing"
             ));
 
             return Map.of(
                 "status", "error",
-                "error", "NullPointerException: failed to generate shipping label for user " + userId,
-                "detail", "User profile has a null shipping address. This is a known data integrity bug.",
+                "error", "NullPointerException: unexpected null encountered while processing order for user " + userId,
+                "detail", "A server error occurred while processing the request.",
                 "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
         }
@@ -244,9 +257,14 @@ public class DemoApplication {
     // --- Internal Methods ---
 
     private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
-        String normalizedAddress = user.address.toUpperCase();
+        if (user == null) {
+            throw new IllegalArgumentException("User profile is required");
+        }
+        if (user.address == null || user.address.isBlank()) {
+            throw new IllegalStateException("Missing shipping address for userId=" + user.id);
+        }
+
+        String normalizedAddress = user.address.toUpperCase(Locale.ROOT);
         return user.name + "\n" + normalizedAddress;
     }
 
