@@ -185,8 +185,6 @@ public class DemoApplication {
 
             log.info("Processing order for user: {} ({})", user.name, user.email);
 
-            // BUG: No null-check on user.address before calling toUpperCase().
-            // User "1002" (Bob Martinez) has a null address, causing a NullPointerException here.
             String shippingLabel = formatShippingLabel(user);
 
             String orderId = "ORD-" + System.currentTimeMillis();
@@ -203,6 +201,23 @@ public class DemoApplication {
                 "product", product,
                 "quantity", quantity,
                 "shippingAddress", shippingLabel,
+                "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            );
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.warn("Order request rejected: userId={} reason={}", userId, e.getMessage());
+
+            NewRelic.noticeError(e, Map.of(
+                "userId", userId,
+                "product", product,
+                "errorType", e.getClass().getSimpleName(),
+                "component", "OrderProcessing",
+                "rootCause", e.getMessage()
+            ));
+
+            return Map.of(
+                "status", "error",
+                "error", e.getClass().getSimpleName() + ": " + e.getMessage(),
                 "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
 
@@ -244,8 +259,13 @@ public class DemoApplication {
     // --- Internal Methods ---
 
     private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
+        if (user == null) {
+            throw new IllegalArgumentException("User profile is required");
+        }
+        if (user.address == null || user.address.isBlank()) {
+            throw new IllegalStateException("Missing shipping address for userId=" + user.id);
+        }
+
         String normalizedAddress = user.address.toUpperCase();
         return user.name + "\n" + normalizedAddress;
     }
