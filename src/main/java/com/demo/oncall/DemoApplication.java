@@ -8,6 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -205,9 +207,17 @@ public class DemoApplication {
             );
 
         } catch (NullPointerException e) {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            String stackTrace = sw.toString();
+
             log.error("CRITICAL: NullPointerException while processing order for userId={}. " +
                       "This indicates a data integrity issue — the user's shipping address is null. " +
-                      "Product: {}, Quantity: {}", userId, product, quantity, e);
+                      "Product: {}, Quantity: {}. " +
+                      "Source: src/main/java/com/demo/oncall/DemoApplication.java " +
+                      "Method: formatShippingLabel() " +
+                      "Repo: https://github.com/yuvrajsingh16/testrepo " +
+                      "Stacktrace:\n{}", userId, product, quantity, stackTrace);
 
             NewRelic.noticeError(e, Map.of(
                 "userId", userId,
