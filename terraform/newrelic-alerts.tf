@@ -43,19 +43,19 @@ resource "newrelic_alert_policy" "oncall_demo" {
   incident_preference = "PER_CONDITION"
 }
 
-# --- NRQL Alert: NullPointerException in Order Processing ---
+# --- NRQL Alert: Missing Shipping Address in Order Processing ---
 
-resource "newrelic_nrql_alert_condition" "null_pointer_exception" {
+resource "newrelic_nrql_alert_condition" "missing_shipping_address" {
   account_id                   = var.newrelic_account_id
   policy_id                    = newrelic_alert_policy.oncall_demo.id
   type                         = "static"
-  name                         = "NullPointerException in oncall-demo"
-  description                  = "A NullPointerException occurred in the Order Processing service. User shipping address is null."
+  name                         = "Missing shipping address in oncall-demo"
+  description                  = "Order processing returned a missing shipping address error (user profile has no shipping address)."
   enabled                      = true
   violation_time_limit_seconds = 3600
 
   nrql {
-    query = "SELECT count(*) FROM TransactionError WHERE appName = 'oncall-demo' AND error.class = 'java.lang.NullPointerException'"
+    query = "SELECT count(*) FROM Transaction WHERE appName = 'oncall-demo' AND errorType = 'MissingShippingAddress'"
   }
 
   critical {
@@ -151,7 +151,7 @@ output "alert_policy_id" {
   description = "New Relic Alert Policy ID"
 }
 
-output "npe_condition_id" {
-  value       = newrelic_nrql_alert_condition.null_pointer_exception.id
-  description = "NullPointerException Alert Condition ID"
+output "missing_shipping_address_condition_id" {
+  value       = newrelic_nrql_alert_condition.missing_shipping_address.id
+  description = "Missing shipping address alert condition ID"
 }
