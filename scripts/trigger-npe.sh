@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Triggers the NullPointerException by submitting an order for Bob Martinez (userId=1002)
+# Triggers a predictable order-processing error by submitting an order for Bob Martinez (userId=1002)
 # whose shipping address is null in the database.
 
 BASE_URL="${1:-http://localhost:8085}"
 REPEAT="${2:-1}"
 
-echo "=== OnCall Demo: Triggering NullPointerException ==="
+echo "=== OnCall Demo: Triggering missing shipping address error ==="
 echo "Target: $BASE_URL"
 echo "Repeat: $REPEAT time(s)"
 echo ""
