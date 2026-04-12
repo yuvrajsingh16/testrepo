@@ -19,7 +19,7 @@ The order endpoint now returns a clear error response when the shipping address 
 ```bash
 ./mvnw spring-boot:run
 # Open http://localhost:8085
-# Select "Bob Martinez" → click "Process Order" → triggers NPE
+# Select "Bob Martinez" → click "Process Order" → returns a missing-address error
 ```
 
 ### Run with New Relic
@@ -31,7 +31,7 @@ export NEW_RELIC_LICENSE_KEY="your-key-here"
 # 2. Run with Docker
 docker-compose up --build
 
-# 3. Trigger the bug
+# 3. Trigger the demo error
 bash scripts/trigger-npe.sh http://localhost:8085 5
 ```
 
