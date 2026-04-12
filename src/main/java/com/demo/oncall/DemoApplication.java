@@ -244,9 +244,7 @@ public class DemoApplication {
     // --- Internal Methods ---
 
     private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
-        String normalizedAddress = user.address.toUpperCase();
+        String normalizedAddress = user.address.toUpperCase(Locale.ROOT);
         return user.name + "\n" + normalizedAddress;
     }
 
