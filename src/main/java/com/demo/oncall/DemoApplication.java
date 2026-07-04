@@ -185,8 +185,6 @@ public class DemoApplication {
 
             log.info("Processing order for user: {} ({})", user.name, user.email);
 
-            // BUG: No null-check on user.address before calling toUpperCase().
-            // User "1002" (Bob Martinez) has a null address, causing a NullPointerException here.
             String shippingLabel = formatShippingLabel(user);
 
             String orderId = "ORD-" + System.currentTimeMillis();
@@ -203,6 +201,25 @@ public class DemoApplication {
                 "product", product,
                 "quantity", quantity,
                 "shippingAddress", shippingLabel,
+                "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            );
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Order processing failed due to invalid user profile: userId={}, product={}, quantity={}, message={}",
+                    userId, product, quantity, e.getMessage());
+
+            NewRelic.noticeError(e, Map.of(
+                "userId", userId,
+                "product", product,
+                "errorType", "IllegalArgumentException",
+                "component", "OrderProcessing",
+                "rootCause", "Missing or invalid user shipping address"
+            ));
+
+            return Map.of(
+                "status", "error",
+                "error", "Invalid user profile: failed to generate shipping label for user " + userId,
+                "detail", e.getMessage(),
                 "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
 
@@ -244,9 +261,12 @@ public class DemoApplication {
     // --- Internal Methods ---
 
     private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
-        String normalizedAddress = user.address.toUpperCase();
+        String address = user.address;
+        if (address == null || address.isBlank()) {
+            throw new IllegalArgumentException("User shipping address is missing");
+        }
+
+        String normalizedAddress = address.toUpperCase();
         return user.name + "\n" + normalizedAddress;
     }
 
