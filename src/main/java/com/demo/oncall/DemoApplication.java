@@ -206,6 +206,20 @@ public class DemoApplication {
                 "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
 
+        } catch (IllegalArgumentException e) {
+            log.warn("Validation error while processing order for userId={}: {}", userId, e.getMessage());
+            NewRelic.noticeError(e, Map.of(
+                "userId", userId,
+                "product", product,
+                "errorType", "ValidationError",
+                "component", "OrderProcessing"
+            ));
+
+            return Map.of(
+                "status", "error",
+                "error", "Validation error: " + e.getMessage(),
+                "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            );
         } catch (NullPointerException e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
@@ -244,8 +258,13 @@ public class DemoApplication {
     // --- Internal Methods ---
 
     private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
+        if (user == null) {
+            throw new IllegalArgumentException("User profile is required to format shipping label");
+        }
+        if (user.address == null || user.address.isBlank()) {
+            throw new IllegalArgumentException("Missing shipping address for userId=" + user.id);
+        }
+
         String normalizedAddress = user.address.toUpperCase();
         return user.name + "\n" + normalizedAddress;
     }
