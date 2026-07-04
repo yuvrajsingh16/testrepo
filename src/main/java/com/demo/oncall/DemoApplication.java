@@ -244,8 +244,13 @@ public class DemoApplication {
     // --- Internal Methods ---
 
     private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
+        if (user == null) {
+            throw new IllegalArgumentException("User profile is required to generate a shipping label");
+        }
+        if (user.address == null || user.address.isBlank()) {
+            throw new IllegalArgumentException("User shipping address is missing for userId=" + user.id);
+        }
+
         String normalizedAddress = user.address.toUpperCase();
         return user.name + "\n" + normalizedAddress;
     }
