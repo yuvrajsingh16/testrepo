@@ -244,9 +244,17 @@ public class DemoApplication {
     // --- Internal Methods ---
 
     private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
-        String normalizedAddress = user.address.toUpperCase();
+        if (user == null) {
+            return "UNKNOWN CUSTOMER\nUNKNOWN ADDRESS";
+        }
+
+        String address = user.address;
+        if (address == null || address.isBlank()) {
+            log.warn("Missing shipping address for userId={} ({}). Returning placeholder label.", user.id, user.email);
+            return user.name + "\n" + "ADDRESS UNAVAILABLE";
+        }
+
+        String normalizedAddress = address.toUpperCase();
         return user.name + "\n" + normalizedAddress;
     }
 
