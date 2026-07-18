@@ -7,12 +7,15 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+
+import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 @SpringBootApplication
 @RestController
@@ -25,9 +28,9 @@ public class DemoApplication {
     private static final Map<String, UserProfile> USER_DB = new LinkedHashMap<>();
 
     static {
-        USER_DB.put("1001", new UserProfile("1001", "Alice Johnson", "alice@example.com", "123 Main St, Springfield, IL 62704"));
-        USER_DB.put("1002", new UserProfile("1002", "Bob Martinez", "bob@example.com", null));
-        USER_DB.put("1003", new UserProfile("1003", "Charlie Davis", "charlie@example.com", "789 Oak Ave, Portland, OR 97201"));
+        USER_DB.put("1001", new UserProfile("1001", "Alice Johnson", "[EMAIL_3]", "123 Main St, Springfield, IL 62704"));
+        USER_DB.put("1002", new UserProfile("1002", "Bob Martinez", "[EMAIL_2]", null));
+        USER_DB.put("1003", new UserProfile("1003", "Charlie Davis", "[EMAIL_1]", "789 Oak Ave, Portland, OR 97201"));
     }
 
     // --- Endpoints ---
@@ -185,8 +188,6 @@ public class DemoApplication {
 
             log.info("Processing order for user: {} ({})", user.name, user.email);
 
-            // BUG: No null-check on user.address before calling toUpperCase().
-            // User "1002" (Bob Martinez) has a null address, causing a NullPointerException here.
             String shippingLabel = formatShippingLabel(user);
 
             String orderId = "ORD-" + System.currentTimeMillis();
@@ -206,6 +207,16 @@ public class DemoApplication {
                 "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
 
+        } catch (ResponseStatusException e) {
+            if (UNPROCESSABLE_ENTITY.equals(e.getStatusCode())) {
+                return Map.of(
+                    "status", "error",
+                    "error", "Validation failed: missing shipping address for user " + userId,
+                    "detail", "User profile must include a non-empty shipping address to process an order.",
+                    "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                );
+            }
+            throw e;
         } catch (NullPointerException e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
@@ -244,8 +255,10 @@ public class DemoApplication {
     // --- Internal Methods ---
 
     private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
+        if (user == null || user.address == null || user.address.isBlank()) {
+            throw new ResponseStatusException(UNPROCESSABLE_ENTITY, "Missing shipping address");
+        }
+
         String normalizedAddress = user.address.toUpperCase();
         return user.name + "\n" + normalizedAddress;
     }
