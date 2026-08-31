@@ -25,9 +25,9 @@ public class DemoApplication {
     private static final Map<String, UserProfile> USER_DB = new LinkedHashMap<>();
 
     static {
-        USER_DB.put("1001", new UserProfile("1001", "Alice Johnson", "alice@example.com", "123 Main St, Springfield, IL 62704"));
-        USER_DB.put("1002", new UserProfile("1002", "Bob Martinez", "bob@example.com", null));
-        USER_DB.put("1003", new UserProfile("1003", "Charlie Davis", "charlie@example.com", "789 Oak Ave, Portland, OR 97201"));
+        USER_DB.put("1001", new UserProfile("1001", "Alice Johnson", "[EMAIL_3]", "123 Main St, Springfield, IL 62704"));
+        USER_DB.put("1002", new UserProfile("1002", "Bob Martinez", "[EMAIL_2]", null));
+        USER_DB.put("1003", new UserProfile("1003", "Charlie Davis", "[EMAIL_1]", "789 Oak Ave, Portland, OR 97201"));
     }
 
     // --- Endpoints ---
@@ -206,6 +206,23 @@ public class DemoApplication {
                 "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
 
+        } catch (IllegalArgumentException e) {
+            log.warn("Validation error while processing order for userId={}: {}", userId, e.getMessage());
+
+            NewRelic.noticeError(e, Map.of(
+                "userId", userId,
+                "product", product,
+                "errorType", "ValidationError",
+                "component", "OrderProcessing",
+                "rootCause", e.getMessage()
+            ));
+
+            return Map.of(
+                "status", "error",
+                "error", "Validation error: " + e.getMessage(),
+                "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            );
+
         } catch (NullPointerException e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
@@ -244,8 +261,13 @@ public class DemoApplication {
     // --- Internal Methods ---
 
     private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
+        if (user == null) {
+            throw new IllegalArgumentException("User profile is required");
+        }
+        if (user.address == null || user.address.isBlank()) {
+            throw new IllegalArgumentException("User shipping address is missing");
+        }
+
         String normalizedAddress = user.address.toUpperCase();
         return user.name + "\n" + normalizedAddress;
     }
