@@ -25,9 +25,9 @@ public class DemoApplication {
     private static final Map<String, UserProfile> USER_DB = new LinkedHashMap<>();
 
     static {
-        USER_DB.put("1001", new UserProfile("1001", "Alice Johnson", "alice@example.com", "123 Main St, Springfield, IL 62704"));
-        USER_DB.put("1002", new UserProfile("1002", "Bob Martinez", "bob@example.com", null));
-        USER_DB.put("1003", new UserProfile("1003", "Charlie Davis", "charlie@example.com", "789 Oak Ave, Portland, OR 97201"));
+        USER_DB.put("1001", new UserProfile("1001", "Alice Johnson", "[EMAIL_3]", "123 Main St, Springfield, IL 62704"));
+        USER_DB.put("1002", new UserProfile("1002", "Bob Martinez", "[EMAIL_2]", null));
+        USER_DB.put("1003", new UserProfile("1003", "Charlie Davis", "[EMAIL_1]", "789 Oak Ave, Portland, OR 97201"));
     }
 
     // --- Endpoints ---
@@ -244,8 +244,13 @@ public class DemoApplication {
     // --- Internal Methods ---
 
     private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
+        if (user == null) {
+            throw new IllegalArgumentException("User profile must not be null");
+        }
+        if (user.address == null || user.address.isBlank()) {
+            throw new IllegalArgumentException("Missing shipping address for userId=" + user.id);
+        }
+
         String normalizedAddress = user.address.toUpperCase();
         return user.name + "\n" + normalizedAddress;
     }
