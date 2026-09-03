@@ -25,9 +25,9 @@ public class DemoApplication {
     private static final Map<String, UserProfile> USER_DB = new LinkedHashMap<>();
 
     static {
-        USER_DB.put("1001", new UserProfile("1001", "Alice Johnson", "alice@example.com", "123 Main St, Springfield, IL 62704"));
-        USER_DB.put("1002", new UserProfile("1002", "Bob Martinez", "bob@example.com", null));
-        USER_DB.put("1003", new UserProfile("1003", "Charlie Davis", "charlie@example.com", "789 Oak Ave, Portland, OR 97201"));
+        USER_DB.put("1001", new UserProfile("1001", "Alice Johnson", "[EMAIL_3]", "123 Main St, Springfield, IL 62704"));
+        USER_DB.put("1002", new UserProfile("1002", "Bob Martinez", "[EMAIL_2]", null));
+        USER_DB.put("1003", new UserProfile("1003", "Charlie Davis", "[EMAIL_1]", "789 Oak Ave, Portland, OR 97201"));
     }
 
     // --- Endpoints ---
@@ -185,8 +185,6 @@ public class DemoApplication {
 
             log.info("Processing order for user: {} ({})", user.name, user.email);
 
-            // BUG: No null-check on user.address before calling toUpperCase().
-            // User "1002" (Bob Martinez) has a null address, causing a NullPointerException here.
             String shippingLabel = formatShippingLabel(user);
 
             String orderId = "ORD-" + System.currentTimeMillis();
@@ -203,6 +201,22 @@ public class DemoApplication {
                 "product", product,
                 "quantity", quantity,
                 "shippingAddress", shippingLabel,
+                "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            );
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Validation error while processing order for userId={}: {}", userId, e.getMessage());
+
+            NewRelic.noticeError(e, Map.of(
+                "userId", userId,
+                "product", product,
+                "errorType", "ValidationError",
+                "component", "OrderProcessing"
+            ));
+
+            return Map.of(
+                "status", "error",
+                "error", e.getMessage(),
                 "timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
 
@@ -244,9 +258,16 @@ public class DemoApplication {
     // --- Internal Methods ---
 
     private String formatShippingLabel(UserProfile user) {
-        // BUG: user.address can be null — no guard here.
-        // This will throw NullPointerException for users with missing address data.
-        String normalizedAddress = user.address.toUpperCase();
+        if (user == null) {
+            throw new IllegalArgumentException("User profile is required");
+        }
+
+        String address = user.address;
+        if (address == null || address.isBlank()) {
+            throw new IllegalArgumentException("User shipping address is missing for userId=" + user.id);
+        }
+
+        String normalizedAddress = address.toUpperCase();
         return user.name + "\n" + normalizedAddress;
     }
 
