@@ -1,5 +1,5 @@
 common: &default_settings
-  license_key: '2ad32be51774212b220eb5317935047eFFFFNRAL'
+  license_key: '${NEW_RELIC_LICENSE_KEY}'
 
   app_name: oncall-demo
 

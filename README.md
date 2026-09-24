@@ -6,16 +6,11 @@ A deliberately buggy Java Spring Boot application for demonstrating an **on-call
 Alert (New Relic) → Agent reads exception/logs → Understands issue → Raises PR → Creates ServiceNow ticket
 ```
 
-## The Bug
+## The Bug (fixed)
 
-`DemoApplication.java` has a `NullPointerException` in the order processing flow. When a user with a **null shipping address** (Bob Martinez, ID `1002`) places an order, `formatShippingLabel()` calls `.toUpperCase()` on a null address field.
+This app originally contained a deliberate `NullPointerException` in the order processing flow. When a user with a **null shipping address** (Bob Martinez, ID `1002`) placed an order, `formatShippingLabel()` called `.toUpperCase()` on a null address field.
 
-**Stack trace produced:**
-```
-java.lang.NullPointerException: Cannot invoke "String.toUpperCase()" because "user.address" is null
-  at com.demo.oncall.DemoApplication.formatShippingLabel(DemoApplication.java:...)
-  at com.demo.oncall.DemoApplication.processOrder(DemoApplication.java:...)
-```
+The order endpoint now returns a clear error response when the shipping address is missing (and still reports unexpected exceptions to New Relic).
 
 ## Quick Start
 
@@ -24,7 +19,7 @@ java.lang.NullPointerException: Cannot invoke "String.toUpperCase()" because "us
 ```bash
 ./mvnw spring-boot:run
 # Open http://localhost:8085
-# Select "Bob Martinez" → click "Process Order" → triggers NPE
+# Select "Bob Martinez" → click "Process Order" → returns a missing-address error
 ```
 
 ### Run with New Relic
@@ -36,7 +31,7 @@ export NEW_RELIC_LICENSE_KEY="your-key-here"
 # 2. Run with Docker
 docker-compose up --build
 
-# 3. Trigger the bug
+# 3. Trigger the demo error
 bash scripts/trigger-npe.sh http://localhost:8085 5
 ```
 
